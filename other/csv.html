@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Data Merger</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .upload-area {
+            border: 3px dashed #6a11cb;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            background-color: #f9f9ff;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            background-color: #f0f0ff;
+            border-color: #2575fc;
+        }
+
+        .upload-area.dragover {
+            background-color: #e6eeff;
+            border-color: #2575fc;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #6a11cb;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #888;
+            font-size: 14px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(106, 17, 203, 0.3);
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button.secondary {
+            background: linear-gradient(to right, #4CAF50, #2E7D32);
+        }
+
+        button.secondary:hover {
+            box-shadow: 0 7px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .info-box {
+            background-color: #f0f8ff;
+            border-left: 4px solid #2575fc;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+        }
+
+        .info-box h3 {
+            color: #2575fc;
+            margin-bottom: 8px;
+        }
+
+        .info-box ul {
+            padding-left: 20px;
+            color: #555;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        .file-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .file-size {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .status.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .status.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+
+        .status.info {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #90caf9;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #6a11cb;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #888;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CSV Data Merger</h1>
+        <div class="subtitle">Upload and merge multiple CSV files without duplicates</div>
+        
+        <div class="info-box">
+            <h3>How it works:</h3>
+            <ul>
+                <li>Upload one or more CSV files with similar format</li>
+                <li>The system will merge all data into a single CSV file</li>
+                <li>Duplicate rows (based on date and other fields) will be removed</li>
+                <li>When adding new files, existing data will be updated without creating duplicates</li>
+                <li>Download the merged CSV file</li>
+            </ul>
+        </div>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Click to upload CSV files or drag and drop</div>
+            <div class="upload-subtext">Supports multiple CSV files with similar structure</div>
+            <input type="file" id="fileInput" accept=".csv" multiple>
+        </div>
+        
+        <div class="file-list" id="fileList">
+            <!-- Uploaded files will appear here -->
+            <div style="text-align: center; color: #888; padding: 20px;">No files selected</div>
+        </div>
+        
+        <div class="button-container">
+            <button id="mergeBtn" onclick="mergeFiles()" disabled>
+                <span>Merge Files</span>
+            </button>
+            <button id="downloadBtn" class="secondary" onclick="downloadMerged()" disabled>
+                <span>Download Merged CSV</span>
+            </button>
+            <button onclick="clearAll()">
+                <span>Clear All</span>
+            </button>
+        </div>
+        
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-item">
+                <div class="stat-value" id="totalFiles">0</div>
+                <div class="stat-label">Files</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalRows">0</div>
+                <div class="stat-label">Total Rows</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="uniqueRows">0</div>
+                <div class="stat-label">Unique Rows</div>
+            </div>
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <footer>
+            CSV Data Merger &middot; Merges files without duplicates &middot; Updates existing data
+        </footer>
+    </div>
+
+    <script>
+        let files = [];
+        let mergedData = [];
+        let mergedCsv = '';
+        
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const mergeBtn = document.getElementById('mergeBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const status = document.getElementById('status');
+        const stats = document.getElementById('stats');
+        const totalFilesEl = document.getElementById('totalFiles');
+        const totalRowsEl = document.getElementById('totalRows');
+        const uniqueRowsEl = document.getElementById('uniqueRows');
+        
+        // Event listeners for drag and drop
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        function handleFiles(fileList) {
+            const newFiles = Array.from(fileList).filter(file => 
+                file.name.toLowerCase().endsWith('.csv')
+            );
+            
+            if (newFiles.length === 0) {
+                showStatus('Please select CSV files only', 'error');
+                return;
+            }
+            
+            // Add new files to the list
+            files = [...files, ...newFiles];
+            
+            // Update UI
+            updateFileList();
+            mergeBtn.disabled = files.length === 0;
+            
+            showStatus(`Added ${newFiles.length} CSV file(s)`, 'info');
+        }
+        
+        function updateFileList() {
+            if (files.length === 0) {
+                fileList.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">No files selected</div>';
+                return;
+            }
+            
+            let html = '';
+            files.forEach((file, index) => {
+                const size = formatFileSize(file.size);
+                html += `
+                    <div class="file-item">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${size}</div>
+                    </div>
+                `;
+            });
+            
+            fileList.innerHTML = html;
+            totalFilesEl.textContent = files.length;
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        async function mergeFiles() {
+            if (files.length === 0) {
+                showStatus('No files to merge', 'error');
+                return;
+            }
+            
+            showStatus('Processing files...', 'info');
+            mergeBtn.innerHTML = '<div class="loading"></div><span>Processing...</span>';
+            mergeBtn.disabled = true;
+            
+            try {
+                let allRows = [];
+                let headers = null;
+                
+                // Process each file
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const text = await readFile(file);
+                    const rows = parseCSV(text);
+                    
+                    if (rows.length === 0) continue;
+                    
+                    // Set headers from first file
+                    if (headers === null) {
+                        headers = rows[0];
+                    }
+                    
+                    // Add data rows (skip header row)
+                    for (let j = 1; j < rows.length; j++) {
+                        allRows.push(rows[j]);
+                    }
+                }
+                
+                if (headers === null || allRows.length === 0) {
+                    throw new Error('No valid data found in files');
+                }
+                
+                // Remove duplicates based on key fields (JobID, Date Time, Document Name)
+                const uniqueRows = removeDuplicates(allRows, headers);
+                
+                // Sort by date (assuming date is in column 4, index 3)
+                const dateIndex = headers.indexOf('Date Time');
+                if (dateIndex !== -1) {
+                    uniqueRows.sort((a, b) => {
+                        const dateA = new Date(a[dateIndex] || 0);
+                        const dateB = new Date(b[dateIndex] || 0);
+                        return dateB - dateA; // Newest first
+                    });
+                }
+                
+                // Create merged CSV
+                mergedData = [headers, ...uniqueRows];
+                mergedCsv = convertToCSV(mergedData);
+                
+                // Update stats
+                totalRowsEl.textContent = allRows.length;
+                uniqueRowsEl.textContent = uniqueRows.length;
+                stats.style.display = 'flex';
+                
+                // Enable download button
+                downloadBtn.disabled = false;
+                
+                showStatus(`Successfully merged ${files.length} file(s). ${allRows.length} total rows, ${uniqueRows.length} unique rows.`, 'success');
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                console.error(error);
+            } finally {
+                mergeBtn.innerHTML = '<span>Merge Files</span>';
+                mergeBtn.disabled = files.length === 0;
+            }
+        }
+        
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+        }
+        
+        function parseCSV(text) {
+            const rows = [];
+            const lines = text.split(/\r\n|\n/);
+            
+            for (let line of lines) {
+                if (line.trim() === '') continue;
+                
+                // Simple CSV parsing (handles basic cases)
+                const row = [];
+                let inQuotes = false;
+                let currentValue = '';
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        row.push(currentValue);
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                
+                row.push(currentValue);
+                rows.push(row);
+            }
+            
+            return rows;
+        }
+        
+        function removeDuplicates(rows, headers) {
+            const seen = new Set();
+            const uniqueRows = [];
+            
+            // Identify key columns for deduplication
+            const jobIdIndex = headers.indexOf('JobID');
+            const dateIndex = headers.indexOf('Date Time');
+            const docIndex = headers.indexOf('Document Name');
+            const userIndex = headers.indexOf('User Name');
+            
+            rows.forEach(row => {
+                // Create a unique key from multiple fields
+                let key = '';
+                if (jobIdIndex !== -1) key += row[jobIdIndex] || '';
+                if (dateIndex !== -1) key += '|' + (row[dateIndex] || '');
+                if (docIndex !== -1) key += '|' + (row[docIndex] || '');
+                if (userIndex !== -1) key += '|' + (row[userIndex] || '');
+                
+                // If we don't have a good key, use the entire row
+                if (!key.trim()) {
+                    key = row.join('|');
+                }
+                
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueRows.push(row);
+                }
+            });
+            
+            return uniqueRows;
+        }
+        
+        function convertToCSV(data) {
+            return data.map(row => 
+                row.map(cell => {
+                    // Escape quotes and wrap in quotes if contains comma or quotes
+                    if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) {
+                        return '"' + cell.replace(/"/g, '""') + '"';
+                    }
+                    return cell;
+                }).join(',')
+            ).join('\n');
+        }
+        
+        function downloadMerged() {
+            if (!mergedCsv) {
+                showStatus('No merged data to download', 'error');
+                return;
+            }
+            
+            const blob = new Blob([mergedCsv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `merged_data_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showStatus('File downloaded successfully', 'success');
+        }
+        
+        function clearAll() {
+            files = [];
+            mergedData = [];
+            mergedCsv = '';
+            fileInput.value = '';
+            updateFileList();
+            mergeBtn.disabled = true;
+            downloadBtn.disabled = true;
+            stats.style.display = 'none';
+            hideStatus();
+        }
+        
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            // Auto-hide after 5 seconds for success/info messages
+            if (type !== 'error') {
+                setTimeout(() => {
+                    if (status.textContent === message) {
+                        hideStatus();
+                    }
+                }, 5000);
+            }
+        }
+        
+        function hideStatus() {
+            status.style.display = 'none';
+        }
+        
+        // Initialize
+        updateFileList();
+    </script>
+</body>
+</html>
